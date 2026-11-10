@@ -308,7 +308,9 @@ export const useInventoryStore = create<InventoryState>()(
       },
     }),
     {
-      name: 'stockpilot-inventory-v1',
+      // Keep the previous general-supply catalog intact under its old key.
+      // The cafe workspace starts with its own inventory and saved changes.
+      name: 'cafe-shop-inventory-v1',
       storage: createJSONStorage(() => localStorage),
       version: 1,
     },

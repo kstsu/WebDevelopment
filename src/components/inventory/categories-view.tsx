@@ -103,7 +103,7 @@ function CategoryDialog({ open, category, onClose }: CategoryDialogProps) {
                 setName(e.target.value)
                 setError(null)
               }}
-              placeholder="e.g. Electronics"
+              placeholder="e.g. Coffee Beans"
               aria-invalid={!!error}
             />
             {error && (
@@ -169,7 +169,7 @@ export function CategoriesView() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-card/55 px-4 py-3">
         <p className="text-sm text-muted-foreground">
           {categories.length} categor{categories.length === 1 ? 'y' : 'ies'} ·{' '}
           {products.length} products organized

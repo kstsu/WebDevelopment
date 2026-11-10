@@ -15,10 +15,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Shopee — Inventory Management System",
+  title: "Cafe Shop — Inventory Management",
   description:
-    "Small-to-medium enterprise inventory system: manage products, categories, suppliers and stock movements with full CRUD functionality.",
-  keywords: ["inventory", "stock", "SME", "CRUD", "management system"],
+    "Manage Cafe Shop coffee beans, tea, pastries, ingredients and takeaway supplies in one inventory workspace.",
+  keywords: ["cafe", "coffee shop", "inventory", "stock", "management system"],
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },
@@ -34,12 +34,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+          >
           {children}
           <Toaster position="top-right" richColors closeButton />
         </ThemeProvider>

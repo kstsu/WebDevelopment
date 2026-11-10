@@ -156,7 +156,7 @@ export function ProductsView({ onQuickStock }: ProductsViewProps) {
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+      <div className="workspace-card flex flex-col gap-3 rounded-2xl border bg-card/75 p-3 lg:flex-row lg:items-center">
         <div className="relative flex-1">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -166,7 +166,7 @@ export function ProductsView({ onQuickStock }: ProductsViewProps) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, SKU or description…"
-            className="pl-9"
+            className="h-10 border-transparent bg-background/80 pl-9 shadow-none focus-visible:border-ring"
             aria-label="Search products"
           />
         </div>
@@ -216,7 +216,7 @@ export function ProductsView({ onQuickStock }: ProductsViewProps) {
       </div>
 
       {/* Table */}
-      <Card className="py-0">
+      <Card className="overflow-hidden py-0">
         <CardContent className="p-0">
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">

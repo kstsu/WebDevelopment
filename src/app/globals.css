@@ -45,37 +45,37 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(0.985 0.004 166);
-  --foreground: oklch(0.17 0.02 170);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.17 0.02 170);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.17 0.02 170);
-  --primary: oklch(0.508 0.118 165.612);
+  --background: oklch(0.975 0.012 95);
+  --foreground: oklch(0.2 0.025 174);
+  --card: oklch(0.995 0.004 95);
+  --card-foreground: oklch(0.2 0.025 174);
+  --popover: oklch(0.995 0.004 95);
+  --popover-foreground: oklch(0.2 0.025 174);
+  --primary: oklch(0.48 0.12 174);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.962 0.015 166);
-  --secondary-foreground: oklch(0.32 0.06 168);
-  --muted: oklch(0.962 0.012 166);
-  --muted-foreground: oklch(0.52 0.02 168);
-  --accent: oklch(0.95 0.03 166);
-  --accent-foreground: oklch(0.32 0.07 168);
+  --secondary: oklch(0.945 0.018 95);
+  --secondary-foreground: oklch(0.32 0.055 174);
+  --muted: oklch(0.945 0.014 95);
+  --muted-foreground: oklch(0.5 0.025 174);
+  --accent: oklch(0.93 0.035 168);
+  --accent-foreground: oklch(0.29 0.07 174);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.906 0.014 166);
-  --input: oklch(0.906 0.014 166);
-  --ring: oklch(0.596 0.145 163.225);
+  --border: oklch(0.89 0.018 95);
+  --input: oklch(0.89 0.018 95);
+  --ring: oklch(0.61 0.14 170);
   --chart-1: oklch(0.596 0.145 163.225);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.666 0.179 58.318);
   --chart-4: oklch(0.769 0.188 70.08);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.975 0.014 166);
-  --sidebar-foreground: oklch(0.17 0.02 170);
-  --sidebar-primary: oklch(0.508 0.118 165.612);
+  --sidebar: oklch(0.955 0.018 168);
+  --sidebar-foreground: oklch(0.2 0.025 174);
+  --sidebar-primary: oklch(0.48 0.12 174);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.94 0.03 166);
-  --sidebar-accent-foreground: oklch(0.32 0.07 168);
-  --sidebar-border: oklch(0.906 0.014 166);
-  --sidebar-ring: oklch(0.596 0.145 163.225);
+  --sidebar-accent: oklch(0.91 0.04 168);
+  --sidebar-accent-foreground: oklch(0.29 0.07 174);
+  --sidebar-border: oklch(0.88 0.022 168);
+  --sidebar-ring: oklch(0.61 0.14 170);
 }
 
 .dark {
@@ -118,7 +118,82 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image: radial-gradient(circle at 92% -10%, oklch(0.91 0.05 168 / 0.5), transparent 32rem),
+      radial-gradient(circle at -10% 60%, oklch(0.94 0.04 95 / 0.65), transparent 28rem);
+    background-attachment: fixed;
   }
+  ::selection {
+    background: oklch(0.72 0.13 168 / 0.35);
+  }
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Crossfade real page snapshots: content stays visible while palettes blend. */
+html.theme-crossfade::view-transition-group(root) {
+  animation-duration: 600ms;
+}
+
+html.theme-crossfade::view-transition-old(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html.theme-crossfade::view-transition-new(root) {
+  animation: theme-palette-fade 600ms ease-in-out both;
+  mix-blend-mode: normal;
+}
+
+@keyframes theme-palette-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Fallback for browsers without page snapshot transitions. */
+html.theme-color-fade,
+html.theme-color-fade *,
+html.theme-color-fade *::before,
+html.theme-color-fade *::after {
+  transition: background-color 600ms ease-in-out, color 600ms ease-in-out,
+    border-color 600ms ease-in-out, fill 600ms ease-in-out,
+    stroke 600ms ease-in-out, box-shadow 600ms ease-in-out !important;
+}
+
+/* Keep the explicitly requested fade visible without spatial motion. */
+@media (prefers-reduced-motion: reduce) {
+  html.theme-crossfade::view-transition-group(root),
+  html.theme-crossfade::view-transition-new(root) {
+    animation-duration: 180ms;
+  }
+
+  html.theme-color-fade,
+  html.theme-color-fade *,
+  html.theme-color-fade *::before,
+  html.theme-color-fade *::after {
+    transition-duration: 180ms !important;
+  }
+}
+
+/* Shared visual language for the operations workspace. */
+.workspace-card {
+  border-color: oklch(0.87 0.02 95 / 0.9);
+  box-shadow: 0 12px 35px -28px oklch(0.2 0.04 174 / 0.42);
+}
+
+.workspace-card:hover {
+  border-color: oklch(0.79 0.045 168 / 0.9);
+  box-shadow: 0 18px 42px -30px oklch(0.2 0.04 174 / 0.5);
+}
+
+.eyebrow {
+  color: oklch(0.48 0.1 174);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 /* Slim, theme-aware scrollbars for long lists */
@@ -139,4 +214,10 @@
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: var(--muted-foreground);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .workspace-card {
+    transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  }
 }

@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useTheme } from 'next-themes'
 import {
   ArrowLeftRight,
-  Boxes,
+  Coffee,
   LayoutDashboard,
   Menu,
   Moon,
@@ -15,7 +15,6 @@ import {
   Sun,
   Tags,
   Truck,
-  Warehouse,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -79,13 +78,13 @@ export type QuickStockFn = (product: Product, mode: 'IN' | 'OUT') => void
 function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex items-center gap-2.5">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-        <Warehouse className="h-5 w-5" aria-hidden="true" />
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-teal-700 to-emerald-800 text-primary-foreground shadow-[0_8px_20px_-8px_oklch(0.3_0.12_174/0.9)]">
+        <Coffee className="h-5 w-5" aria-hidden="true" />
       </div>
       {!compact && (
         <div className="leading-tight">
-          <p className="font-semibold tracking-tight">Shopee</p>
-          <p className="text-xs text-muted-foreground">Inventory Management</p>
+          <p className="font-semibold tracking-tight text-foreground">Cafe Shop</p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">Inventory OS</p>
         </div>
       )}
     </div>
@@ -97,14 +96,50 @@ function Brand({ compact = false }: { compact?: boolean }) {
 function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const isAnimating = React.useRef(false)
   React.useEffect(() => setMounted(true), [])
+
+  const toggleTheme = () => {
+    if (isAnimating.current) return
+
+    const root = document.documentElement
+    const nextTheme = resolvedTheme === 'dark' ? 'light' : 'dark'
+    isAnimating.current = true
+
+    const applyTheme = () => {
+      // Update the DOM inside the snapshot callback, not in a later React
+      // effect, so the new snapshot actually captures the new palette.
+      root.classList.remove('light', 'dark')
+      root.classList.add(nextTheme)
+      root.style.colorScheme = nextTheme
+      setTheme(nextTheme)
+    }
+
+    const finish = () => {
+      root.classList.remove('theme-crossfade', 'theme-color-fade')
+      isAnimating.current = false
+    }
+
+    if (typeof document.startViewTransition === 'function') {
+      root.classList.add('theme-crossfade')
+      const transition = document.startViewTransition(applyTheme)
+      void transition.finished.then(finish, finish)
+      return
+    }
+
+    // Commit the transition rules before changing colors in older browsers.
+    root.classList.add('theme-color-fade')
+    void getComputedStyle(document.body).backgroundColor
+    applyTheme()
+    window.setTimeout(finish, 700)
+  }
 
   return (
     <Button
       variant="ghost"
       size="icon"
       aria-label="Toggle color theme"
-      onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+      onClick={toggleTheme}
     >
       {mounted && resolvedTheme === 'dark' ? (
         <Sun className="h-4 w-4" />
@@ -136,7 +171,7 @@ function NavList({
             aria-current={isActive ? 'page' : undefined}
             className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
               isActive
-                ? 'bg-primary font-medium text-primary-foreground shadow-sm'
+                ? 'bg-primary font-medium text-primary-foreground shadow-[0_8px_18px_-10px_oklch(0.3_0.12_174/0.9)]'
                 : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
             }`}
           >
@@ -162,14 +197,14 @@ function ResetDataButton({ full }: { full?: boolean }) {
           className={full ? 'w-full justify-start gap-2' : 'gap-2'}
         >
           <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-          Reset demo data
+          Reset sample inventory
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Reset demo data?</AlertDialogTitle>
+          <AlertDialogTitle>Reset sample inventory?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will restore the original sample catalog — products, categories,
+            This will restore the cafe sample catalog — products, categories,
             suppliers and stock history — replacing everything you changed.
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -178,7 +213,7 @@ function ResetDataButton({ full }: { full?: boolean }) {
           <AlertDialogAction
             onClick={() => {
               resetData()
-              toast.success('Demo data has been reset to the original sample catalog.')
+              toast.success('Cafe sample inventory has been restored.')
             }}
           >
             Reset everything
@@ -195,10 +230,10 @@ function BootSplash() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
       <div className="flex h-14 w-14 animate-pulse items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
-        <Warehouse className="h-7 w-7" aria-hidden="true" />
+        <Coffee className="h-7 w-7" aria-hidden="true" />
       </div>
       <div className="space-y-1 text-center">
-        <p className="font-semibold">Shopee</p>
+        <p className="font-semibold">Cafe Shop</p>
         <p className="text-sm text-muted-foreground">Loading your workspace…</p>
       </div>
     </div>
@@ -232,11 +267,14 @@ export function AppShell() {
   const meta = VIEW_META[view]
 
   return (
-    <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-transparent">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
-        <div className="flex h-16 items-center border-b border-sidebar-border px-5">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-sidebar-border/80 bg-sidebar/90 shadow-[18px_0_40px_-36px_oklch(0.2_0.04_174/0.55)] backdrop-blur-xl lg:flex">
+        <div className="flex h-20 items-center border-b border-sidebar-border/80 px-5">
           <Brand />
+        </div>
+        <div className="px-5 pb-2 pt-7">
+          <p className="eyebrow">Workspace</p>
         </div>
         <div className="flex-1 overflow-y-auto px-3 py-4 custom-scrollbar">
           <NavList active={view} onSelect={selectView} />
@@ -247,16 +285,13 @@ export function AppShell() {
             <ThemeToggle />
           </div>
           <ResetDataButton full />
-          <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-            Data is stored locally in your browser — no backend required.
-          </p>
         </div>
       </aside>
 
       {/* Content column */}
       <div className="flex min-h-screen flex-col lg:pl-64">
         {/* Mobile top bar */}
-        <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:hidden">
+        <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-border/70 bg-background/80 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/70 lg:hidden">
           <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" aria-label="Open navigation menu">
@@ -293,17 +328,18 @@ export function AppShell() {
         </header>
 
         {/* Page header */}
-        <div className="border-b bg-background px-4 py-5 md:px-6 lg:px-8">
+        <div className="border-b border-border/70 bg-background/35 px-4 py-7 md:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-7xl">
-            <h1 className="text-xl font-semibold tracking-tight md:text-2xl">
+            <p className="eyebrow">Cafe Shop <span className="mx-1 text-muted-foreground/50">/</span> Operations</p>
+            <h1 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">
               {meta.title}
             </h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">{meta.subtitle}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{meta.subtitle}</p>
           </div>
         </div>
 
         {/* View content */}
-        <main className="flex-1 px-4 py-6 md:px-6 lg:px-8">
+        <main className="flex-1 px-4 py-7 md:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-7xl">
             <AnimatePresence mode="wait">
               <motion.div
@@ -325,16 +361,6 @@ export function AppShell() {
           </div>
         </main>
 
-        {/* Sticky footer */}
-        <footer className="mt-auto border-t px-4 py-4 md:px-6 lg:px-8">
-          <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-2 text-xs text-muted-foreground sm:flex-row">
-            <p className="flex items-center gap-1.5">
-              <Boxes className="h-3.5 w-3.5" aria-hidden="true" />
-              Shopee · Frontend demo — data persists in your browser
-            </p>
-            <p>© {new Date().getFullYear()} Northgate Supply Co.</p>
-          </div>
-        </footer>
       </div>
 
       {/* Quick stock dialog, shared by dashboard + products views */}

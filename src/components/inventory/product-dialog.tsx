@@ -185,7 +185,7 @@ export function ProductDialog({ open, product, onClose }: ProductDialogProps) {
                 <FormItem className="sm:col-span-2">
                   <FormLabel>Product name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Wireless Optical Mouse" {...field} />
+                    <Input placeholder="e.g. House Blend Coffee Beans (1 kg)" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -200,7 +200,7 @@ export function ProductDialog({ open, product, onClose }: ProductDialogProps) {
                 <FormItem>
                   <FormLabel>SKU</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. ELC-1020" {...field} />
+                    <Input placeholder="e.g. COF-1020" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -215,7 +215,7 @@ export function ProductDialog({ open, product, onClose }: ProductDialogProps) {
                 <FormItem>
                   <FormLabel>Unit</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. pcs, box, ream" {...field} />
+                    <Input placeholder="e.g. bag, bottle, tray" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

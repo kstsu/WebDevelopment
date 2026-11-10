@@ -10,6 +10,7 @@ import {
   PackageMinus,
   PackagePlus,
   Scale,
+  Sparkles,
   XCircle,
 } from 'lucide-react'
 import {
@@ -106,15 +107,24 @@ function StatCard({
     red: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
   }
   return (
-    <Card className="transition-shadow hover:shadow-md">
-      <CardContent className="p-5">
+    <Card className="group relative overflow-hidden transition-all hover:-translate-y-0.5">
+      <span className={`absolute inset-x-0 top-0 h-1 ${
+        tone === 'emerald'
+          ? 'bg-emerald-500'
+          : tone === 'teal'
+            ? 'bg-teal-500'
+            : tone === 'amber'
+              ? 'bg-amber-500'
+              : 'bg-red-500'
+      }`} aria-hidden="true" />
+      <CardContent className="p-5 pt-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground">{label}</p>
             <p className="mt-1.5 truncate text-2xl font-semibold tracking-tight">{value}</p>
             <p className="mt-1 truncate text-xs text-muted-foreground">{sub}</p>
           </div>
-          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tones[tone]}`}>
+           <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105 ${tones[tone]}`}>
             <Icon className="h-5 w-5" aria-hidden="true" />
           </span>
         </div>
@@ -175,6 +185,9 @@ export function DashboardView({ onNavigate, onQuickStock }: DashboardViewProps) 
     [movements],
   )
 
+  const healthyProducts = products.filter((product) => getStockStatus(product) === 'IN_STOCK').length
+  const stockCoverage = products.length ? Math.round((healthyProducts / products.length) * 100) : 0
+
   const movementIcon = (type: StockMovement['type']) => {
     if (type === 'IN') return PackagePlus
     if (type === 'OUT') return PackageMinus
@@ -183,6 +196,41 @@ export function DashboardView({ onNavigate, onQuickStock }: DashboardViewProps) 
 
   return (
     <div className="space-y-6">
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#123f3a] via-[#17665d] to-[#27877b] px-6 py-6 text-white shadow-[0_20px_45px_-26px_oklch(0.3_0.12_174/0.8)] md:px-8 md:py-7">
+        <div className="pointer-events-none absolute -right-12 -top-20 h-64 w-64 rounded-full border-[28px] border-white/10" aria-hidden="true" />
+        <div className="pointer-events-none absolute -bottom-28 right-24 h-56 w-56 rounded-full border-[20px] border-white/5" aria-hidden="true" />
+        <div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center">
+          <div className="max-w-xl">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-100/80">
+              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+              Operations snapshot
+            </div>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">Ready for the next coffee rush.</h2>
+            <p className="mt-2 max-w-lg text-sm leading-relaxed text-emerald-50/75">
+              Keep beans, pastries and cafe essentials stocked for every service.
+            </p>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="mt-5 bg-white/95 text-[#14534e] hover:bg-white"
+              onClick={() => onNavigate('products')}
+            >
+              Browse catalog
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Button>
+          </div>
+          <div className="flex w-full max-w-xs items-center gap-4 rounded-2xl border border-white/15 bg-black/10 p-4 backdrop-blur-sm md:w-auto md:min-w-64">
+            <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full" style={{ background: `conic-gradient(#a7f3d0 ${stockCoverage}%, rgba(255,255,255,.16) 0)` }}>
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#17665d] text-lg font-semibold">{stockCoverage}%</div>
+            </div>
+            <div>
+              <p className="text-sm font-medium">Stock health</p>
+              <p className="mt-1 text-xs leading-relaxed text-emerald-50/65">{healthyProducts} of {products.length} products above reorder point</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Stat cards */}
       <section aria-label="Inventory statistics" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
