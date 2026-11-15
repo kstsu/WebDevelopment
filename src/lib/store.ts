@@ -24,6 +24,27 @@ function genId(prefix: string): string {
 
 const nowIso = () => new Date().toISOString()
 
+async function requestApi<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(path, {
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
+    cache: 'no-store',
+  })
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { detail?: string } | null
+    throw new Error(body?.detail ?? 'The server could not complete the request.')
+  }
+  if (response.status === 204) return undefined as T
+  const payload = (await response.json()) as { data: T }
+  return payload.data
+}
+
+const productPayload = (data: NewProductData, id?: string) => ({
+  ...data,
+  sku: data.sku.toUpperCase(),
+  ...(id ? { id } : {}),
+})
+
 // ─── Store shape ────────────────────────────────────────────────────────────
 
 export type NewProductData = Omit<Product, 'id' | 'createdAt' | 'updatedAt'>
@@ -63,6 +84,7 @@ interface InventoryState {
 
   // Utility
   resetData: () => void
+  hydrateFromApi: () => Promise<void>
 }
 
 const seed = buildSeedData()
@@ -74,6 +96,11 @@ export const useInventoryStore = create<InventoryState>()(
       categories: seed.categories,
       suppliers: seed.suppliers,
       movements: seed.movements,
+
+      hydrateFromApi: async () => {
+        const data = await requestApi<Pick<InventoryState, 'products' | 'categories' | 'suppliers' | 'movements'>>('/api/inventory')
+        set(data)
+      },
 
       // ── Products ────────────────────────────────────────────────────────
       addProduct: (data) => {
@@ -102,6 +129,9 @@ export const useInventoryStore = create<InventoryState>()(
                 ]
               : s.movements,
         }))
+        void requestApi<Product>('/api/products', { method: 'POST', body: JSON.stringify(productPayload(data, product.id)) }).catch((error: unknown) => {
+          console.error(JSON.stringify({ event: 'inventory.sync_failed', operation: 'product.created', error: error instanceof Error ? error.message : 'unknown_error' }))
+        })
         return product
       },
 
@@ -135,12 +165,18 @@ export const useInventoryStore = create<InventoryState>()(
             movements,
           }
         })
+        void requestApi<Product>(`/api/products/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(productPayload(data)) }).catch((error: unknown) => {
+          console.error(JSON.stringify({ event: 'inventory.sync_failed', operation: 'product.updated', resource_id: id, error: error instanceof Error ? error.message : 'unknown_error' }))
+        })
       },
 
       deleteProduct: (id) => {
         const product = get().products.find((p) => p.id === id)
         if (!product) return { ok: false, message: 'Product not found.' }
         set((s) => ({ products: s.products.filter((p) => p.id !== id) }))
+        void requestApi<void>(`/api/products/${encodeURIComponent(id)}`, { method: 'DELETE' }).catch((error: unknown) => {
+          console.error(JSON.stringify({ event: 'inventory.sync_failed', operation: 'product.deleted', resource_id: id, error: error instanceof Error ? error.message : 'unknown_error' }))
+        })
         return { ok: true, message: `“${product.name}” was deleted.` }
       },
 
@@ -170,6 +206,9 @@ export const useInventoryStore = create<InventoryState>()(
               ...s.movements,
             ],
           }
+        })
+        void requestApi(`/api/products/${encodeURIComponent(productId)}/stock`, { method: 'POST', body: JSON.stringify({ mode: 'IN', quantity: qty, note }) }).catch((error: unknown) => {
+          console.error(JSON.stringify({ event: 'inventory.sync_failed', operation: 'stock.in', resource_id: productId, error: error instanceof Error ? error.message : 'unknown_error' }))
         })
       },
 
@@ -204,6 +243,9 @@ export const useInventoryStore = create<InventoryState>()(
             ...s.movements,
           ],
         }))
+        void requestApi(`/api/products/${encodeURIComponent(productId)}/stock`, { method: 'POST', body: JSON.stringify({ mode: 'OUT', quantity: qty, note }) }).catch((error: unknown) => {
+          console.error(JSON.stringify({ event: 'inventory.sync_failed', operation: 'stock.out', resource_id: productId, error: error instanceof Error ? error.message : 'unknown_error' }))
+        })
         return { ok: true }
       },
 
@@ -235,22 +277,31 @@ export const useInventoryStore = create<InventoryState>()(
       },
 
       // ── Categories ──────────────────────────────────────────────────────
-      addCategory: (data) =>
+      addCategory: (data) => {
+        const category = { id: genId('cat'), name: data.name.trim(), description: data.description.trim(), createdAt: nowIso() }
         set((s) => ({
           categories: [
             ...s.categories,
-            { id: genId('cat'), name: data.name.trim(), description: data.description.trim(), createdAt: nowIso() },
+            category,
           ],
-        })),
+        }))
+        void requestApi<Category>('/api/categories', { method: 'POST', body: JSON.stringify({ ...data, id: category.id }) }).catch((error: unknown) => {
+          console.error(JSON.stringify({ event: 'inventory.sync_failed', operation: 'category.created', resource_id: category.id, error: error instanceof Error ? error.message : 'unknown_error' }))
+        })
+      },
 
-      updateCategory: (id, data) =>
+      updateCategory: (id, data) => {
         set((s) => ({
           categories: s.categories.map((c) =>
             c.id === id
               ? { ...c, name: data.name.trim(), description: data.description.trim() }
               : c,
           ),
-        })),
+        }))
+        void requestApi<Category>(`/api/categories/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }).catch((error: unknown) => {
+          console.error(JSON.stringify({ event: 'inventory.sync_failed', operation: 'category.updated', resource_id: id, error: error instanceof Error ? error.message : 'unknown_error' }))
+        })
+      },
 
       deleteCategory: (id) => {
         const { products, categories } = get()
@@ -263,24 +314,36 @@ export const useInventoryStore = create<InventoryState>()(
           }
         }
         set((s) => ({ categories: s.categories.filter((c) => c.id !== id) }))
+        void requestApi<void>(`/api/categories/${encodeURIComponent(id)}`, { method: 'DELETE' }).catch((error: unknown) => {
+          console.error(JSON.stringify({ event: 'inventory.sync_failed', operation: 'category.deleted', resource_id: id, error: error instanceof Error ? error.message : 'unknown_error' }))
+        })
         return { ok: true, message: 'Category deleted.' }
       },
 
       // ── Suppliers ───────────────────────────────────────────────────────
-      addSupplier: (data) =>
+      addSupplier: (data) => {
+        const supplier = { ...data, name: data.name.trim(), id: genId('sup'), createdAt: nowIso() }
         set((s) => ({
           suppliers: [
             ...s.suppliers,
-            { ...data, name: data.name.trim(), id: genId('sup'), createdAt: nowIso() },
+            supplier,
           ],
-        })),
+        }))
+        void requestApi<Supplier>('/api/suppliers', { method: 'POST', body: JSON.stringify(data) }).catch((error: unknown) => {
+          console.error(JSON.stringify({ event: 'inventory.sync_failed', operation: 'supplier.created', resource_id: supplier.id, error: error instanceof Error ? error.message : 'unknown_error' }))
+        })
+      },
 
-      updateSupplier: (id, data) =>
+      updateSupplier: (id, data) => {
         set((s) => ({
           suppliers: s.suppliers.map((sup) =>
             sup.id === id ? { ...sup, ...data, name: data.name.trim() } : sup,
           ),
-        })),
+        }))
+        void requestApi<Supplier>(`/api/suppliers/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }).catch((error: unknown) => {
+          console.error(JSON.stringify({ event: 'inventory.sync_failed', operation: 'supplier.updated', resource_id: id, error: error instanceof Error ? error.message : 'unknown_error' }))
+        })
+      },
 
       deleteSupplier: (id) => {
         const { products, suppliers } = get()
@@ -293,6 +356,9 @@ export const useInventoryStore = create<InventoryState>()(
           }
         }
         set((s) => ({ suppliers: s.suppliers.filter((x) => x.id !== id) }))
+        void requestApi<void>(`/api/suppliers/${encodeURIComponent(id)}`, { method: 'DELETE' }).catch((error: unknown) => {
+          console.error(JSON.stringify({ event: 'inventory.sync_failed', operation: 'supplier.deleted', resource_id: id, error: error instanceof Error ? error.message : 'unknown_error' }))
+        })
         return { ok: true, message: 'Supplier deleted.' }
       },
 
@@ -304,6 +370,9 @@ export const useInventoryStore = create<InventoryState>()(
           categories: fresh.categories,
           suppliers: fresh.suppliers,
           movements: fresh.movements,
+        })
+        void requestApi('/api/inventory/reset', { method: 'POST' }).then(() => useInventoryStore.getState().hydrateFromApi()).catch((error: unknown) => {
+          console.error(JSON.stringify({ event: 'inventory.sync_failed', operation: 'inventory.reset', error: error instanceof Error ? error.message : 'unknown_error' }))
         })
       },
     }),

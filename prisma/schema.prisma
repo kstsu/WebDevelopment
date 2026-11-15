@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,20 +7,78 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Category {
+  id          String    @id
+  name        String    @unique
+  description String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
 }
 
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Supplier {
+  id            String    @id
+  name          String
+  contactPerson String
+  email         String
+  phone         String
+  address       String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  products      Product[]
+
+  @@index([name])
+}
+
+model Product {
+  id              String          @id
+  sku             String          @unique
+  name            String
+  description     String
+  categoryId      String
+  supplierId      String
+  unit            String
+  costPriceCents  Int
+  sellingPriceCents Int
+  quantity        Int
+  reorderPoint    Int
+  location        String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  category        Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  supplier        Supplier        @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  movements       StockMovement[]
+
+  @@index([categoryId])
+  @@index([supplierId])
+  @@index([updatedAt])
+}
+
+model StockMovement {
+  id            String    @id
+  productId     String?
+  productName   String
+  type          String
+  quantity      Int
+  resultQuantity Int
+  note          String
+  date          DateTime
+  product       Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([date])
+}
+
+model AuditLog {
+  id           String   @id
+  occurredAt   DateTime @default(now())
+  actorType    String
+  action       String
+  subjectType  String
+  subjectId    String
+  changes      String?
+  requestId    String?
+
+  @@index([subjectType, subjectId, occurredAt])
+  @@index([occurredAt])
 }

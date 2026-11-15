@@ -253,6 +253,15 @@ export function AppShell() {
 
   React.useEffect(() => setMounted(true), [])
 
+  React.useEffect(() => {
+    if (!mounted) return
+    void useInventoryStore.getState().hydrateFromApi().catch((error: unknown) => {
+      toast.error('Could not connect to the inventory database', {
+        description: error instanceof Error ? error.message : 'Please try again shortly.',
+      })
+    })
+  }, [mounted])
+
   const openQuickStock: QuickStockFn = React.useCallback((product, mode) => {
     setStockTarget({ product, mode })
   }, [])
