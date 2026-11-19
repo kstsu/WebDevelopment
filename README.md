@@ -23,7 +23,7 @@ To run the website locally, you need:
 - The project folder extracted from `inventory-system-frontend.zip`
 - Internet access for the first `npm install`, so npm can download the dependencies
 
-Python, a separate database server, and a web server are **not required** for the current frontend-only version. The app stores its data in the browser's localStorage.
+Python and a separate database server are **not required** to run the current frontend. The browser UI stores its data in localStorage. The Prisma-backed API routes can optionally use MongoDB.
 
 Check that Node.js and npm are installed:
 
@@ -43,23 +43,22 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-If `npm run dev` shows a `tee` error on Windows, start Next.js directly:
+The development server logs appear in the terminal. Press `Ctrl+C` in PowerShell to stop it.
+
+### Optional: MongoDB setup for Prisma API routes
+
+The UI runs without a database. To connect the Prisma-backed API routes to MongoDB:
+
+1. Create a MongoDB Atlas cluster (or another MongoDB replica set).
+2. Copy `.env.example` to `.env` and replace the `DATABASE_URL` placeholders with your MongoDB connection string. Keep `.env` private.
+3. Run these commands from the project folder:
 
 ```powershell
-npx next dev -p 3000
+npm run db:generate
+npm run db:push
 ```
 
-Press `Ctrl+C` in PowerShell to stop the development server.
-
-### Optional: database setup (for later phases)
-
-The UI runs without a database. If you want to prepare for Phase 2 (real CRUD via Prisma + SQLite):
-
-```bash
-cp .env.example .env
-npm run db:generate   # generate Prisma client
-npm run db:push       # create db/custom.db
-```
+The API uses Prisma transactions, so use a MongoDB replica set; Atlas clusters provide this. `db:push` creates/updates the MongoDB collections and indexes; Prisma Migrate is not supported for MongoDB. This config starts with a fresh MongoDB database and does **not** copy existing SQLite records. The browser UI continues to use localStorage until it is connected to the API.
 
 ## Project structure
 

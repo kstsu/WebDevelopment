@@ -3,12 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model Category {
-  id          String    @id
+  id          String    @id @map("_id")
   name        String    @unique
   description String
   createdAt   DateTime  @default(now())
@@ -17,7 +17,7 @@ model Category {
 }
 
 model Supplier {
-  id            String    @id
+  id            String    @id @map("_id")
   name          String
   contactPerson String
   email         String
@@ -31,7 +31,7 @@ model Supplier {
 }
 
 model Product {
-  id              String          @id
+  id              String          @id @map("_id")
   sku             String          @unique
   name            String
   description     String
@@ -55,7 +55,7 @@ model Product {
 }
 
 model StockMovement {
-  id            String    @id
+  id            String    @id @map("_id")
   productId     String?
   productName   String
   type          String
@@ -70,7 +70,7 @@ model StockMovement {
 }
 
 model AuditLog {
-  id           String   @id
+  id           String   @id @map("_id")
   occurredAt   DateTime @default(now())
   actorType    String
   action       String
