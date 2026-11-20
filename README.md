@@ -23,7 +23,7 @@ To run the website locally, you need:
 - The project folder extracted from `inventory-system-frontend.zip`
 - Internet access for the first `npm install`, so npm can download the dependencies
 
-Python and a separate database server are **not required** to run the current frontend. The browser UI stores its data in localStorage. The Prisma-backed API routes can optionally use MongoDB.
+Python is **not required** to run this app. The browser UI can fall back to localStorage, but the API routes persist data directly to MongoDB using the official MongoDB driver — no Prisma or SQLite involved.
 
 Check that Node.js and npm are installed:
 
@@ -45,20 +45,27 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 The development server logs appear in the terminal. Press `Ctrl+C` in PowerShell to stop it.
 
-### Optional: MongoDB setup for Prisma API routes
+### MongoDB setup (local, recommended for development)
 
-The UI runs without a database. To connect the Prisma-backed API routes to MongoDB:
+The API uses the official `mongodb` driver directly (no Prisma, ORM, or SQLite). Collections and indexes are created automatically on the first API request.
 
-1. Create a MongoDB Atlas cluster (or another MongoDB replica set).
-2. Copy `.env.example` to `.env` and replace the `DATABASE_URL` placeholders with your MongoDB connection string. Keep `.env` private.
-3. Run these commands from the project folder:
+This project is configured for a local single-node replica set at `mongodb://127.0.0.1:27018/inventory?replicaSet=rs0&retryWrites=true&w=majority` (see `.env`). To start the database after a reboot:
 
 ```powershell
-npm run db:generate
-npm run db:push
+npm run db:local
 ```
 
-The API uses Prisma transactions, so use a MongoDB replica set; Atlas clusters provide this. `db:push` creates/updates the MongoDB collections and indexes; Prisma Migrate is not supported for MongoDB. This config starts with a fresh MongoDB database and does **not** copy existing SQLite records. The browser UI continues to use localStorage until it is connected to the API.
+MongoDB Server 9.0 must be installed. The data lives in `%LOCALAPPDATA%\Temp\opencode\mongodb-rs-data` and logs in `%LOCALAPPDATA%\Temp\opencode\mongod-rs.log`. The replica set only needs initiating once; the script starts the existing data directory.
+
+### MongoDB Atlas (alternative)
+
+To use a hosted database instead:
+
+1. Create a MongoDB Atlas cluster (M0 free works — it is a replica set).
+2. Set `DATABASE_URL` in `.env` to the Atlas connection string, including a database name, e.g. `mongodb+srv://user:password@cluster0.xxxxx.mongodb.net/inventory?retryWrites=true&w=majority`.
+3. Keep `NEXT_PUBLIC_DATABASE_ENABLED="true"` and restart `npm run dev`.
+
+Multi-document writes use MongoDB transactions, so a replica set is required. Without `NEXT_PUBLIC_DATABASE_ENABLED="true"`, the UI uses browser localStorage and displays a notice instead of attempting database sync. For deployments, set both environment variables in the hosting provider and rebuild the app.
 
 ## Project structure
 
@@ -101,10 +108,11 @@ src/
 | Tailwind CSS 4 | Styling |
 | shadcn/ui (Radix) | UI components |
 | Zustand (+ persist) | Client state & localStorage persistence |
+| MongoDB driver | Server-side database access |
 | lucide-react | Icons |
 
-## Roadmap (Phase 2)
+## Backend
 
-- REST API routes backed by Prisma + SQLite (schema & scripts already scaffolded)
+- REST API routes backed directly by MongoDB (`Category`, `Supplier`, `Product`, `StockMovement`, `AuditLog`)
 - Real server-side CRUD endpoints (`/api/products`, `/api/categories`, ...)
 - Replace the client-side store with API calls

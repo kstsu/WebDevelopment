@@ -30,7 +30,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { useInventoryStore } from '@/lib/store'
+import { databaseApiEnabled, useInventoryStore } from '@/lib/store'
 import { toast } from 'sonner'
 import type { Product, ViewId } from '@/lib/types'
 import { StockDialog } from '@/components/inventory/stock-dialog'
@@ -255,6 +255,12 @@ export function AppShell() {
 
   React.useEffect(() => {
     if (!mounted) return
+    if (!databaseApiEnabled) {
+      toast.info('Using browser storage', {
+        description: 'MongoDB API sync is disabled. Configure the database environment variables to enable it.',
+      })
+      return
+    }
     void useInventoryStore.getState().hydrateFromApi().catch((error: unknown) => {
       toast.error('Could not connect to the inventory database', {
         description: error instanceof Error ? error.message : 'Please try again shortly.',
