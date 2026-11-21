@@ -15,10 +15,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cafe Shop — Inventory Management",
+  title: "naokoffi☕ — Inventory Management",
   description:
-    "Manage Cafe Shop coffee beans, tea, pastries, ingredients and takeaway supplies in one inventory workspace.",
-  keywords: ["cafe", "coffee shop", "inventory", "stock", "management system"],
+    "Manage naokoffi’s coffee beans, tea, pastries, ingredients and takeaway supplies in one inventory workspace.",
+  keywords: ["Philippines cafe", "coffee shop", "inventory", "PHP stock", "management system"],
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },

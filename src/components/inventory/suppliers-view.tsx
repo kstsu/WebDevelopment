@@ -289,7 +289,7 @@ export function SuppliersView() {
           {suppliers.map((sup) => {
             const info = suppliedCounts.get(sup.id)
             return (
-              <Card key={sup.id} className="group transition-shadow hover:shadow-md">
+              <Card key={sup.id} className="group">
                 <CardContent className="flex h-full flex-col gap-3 p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-start gap-3">

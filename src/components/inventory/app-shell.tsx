@@ -6,7 +6,6 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useTheme } from 'next-themes'
 import {
   ArrowLeftRight,
-  Coffee,
   LayoutDashboard,
   Menu,
   Moon,
@@ -45,7 +44,7 @@ const NAV_ITEMS: { id: ViewId; label: string; icon: React.ElementType }[] = [
   { id: 'products', label: 'Products', icon: Package },
   { id: 'categories', label: 'Categories', icon: Tags },
   { id: 'suppliers', label: 'Suppliers', icon: Truck },
-  { id: 'movements', label: 'Stock Movements', icon: ArrowLeftRight },
+  { id: 'movements', label: 'Inventory History', icon: ArrowLeftRight },
 ]
 
 const VIEW_META: Record<ViewId, { title: string; subtitle: string }> = {
@@ -66,8 +65,8 @@ const VIEW_META: Record<ViewId, { title: string; subtitle: string }> = {
     subtitle: 'Vendor directory and contact details',
   },
   movements: {
-    title: 'Stock Movements',
-    subtitle: 'Complete audit trail of every stock change',
+    title: 'Inventory History',
+    subtitle: 'Review every change made to your inventory',
   },
 }
 
@@ -77,14 +76,11 @@ export type QuickStockFn = (product: Product, mode: 'IN' | 'OUT') => void
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="flex items-center gap-2.5">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-teal-700 to-emerald-800 text-primary-foreground shadow-[0_8px_20px_-8px_oklch(0.3_0.12_174/0.9)]">
-        <Coffee className="h-5 w-5" aria-hidden="true" />
-      </div>
+    <div className="flex w-full items-center justify-center text-center">
       {!compact && (
-        <div className="leading-tight">
-          <p className="font-semibold tracking-tight text-foreground">Cafe Shop</p>
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">Inventory OS</p>
+        <div className="leading-none">
+          <p className="text-lg font-semibold tracking-[-0.04em] text-foreground">naokoffi☕</p>
+          <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Inventory</p>
         </div>
       )}
     </div>
@@ -171,7 +167,7 @@ function NavList({
             aria-current={isActive ? 'page' : undefined}
             className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
               isActive
-                ? 'bg-primary font-medium text-primary-foreground shadow-[0_8px_18px_-10px_oklch(0.3_0.12_174/0.9)]'
+                 ? 'bg-primary font-medium text-primary-foreground'
                 : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
             }`}
           >
@@ -228,14 +224,12 @@ function ResetDataButton({ full }: { full?: boolean }) {
 
 function BootSplash() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
-      <div className="flex h-14 w-14 animate-pulse items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
-        <Coffee className="h-7 w-7" aria-hidden="true" />
+    <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background">
+      <div className="animate-pulse text-center">
+        <p className="text-2xl font-semibold tracking-[-0.05em]">naokoffi☕</p>
+        <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Inventory</p>
       </div>
-      <div className="space-y-1 text-center">
-        <p className="font-semibold">Cafe Shop</p>
-        <p className="text-sm text-muted-foreground">Loading your workspace…</p>
-      </div>
+      <p className="text-sm text-muted-foreground">Loading your workspace…</p>
     </div>
   )
 }
@@ -284,7 +278,7 @@ export function AppShell() {
   return (
       <div className="min-h-screen bg-transparent">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-sidebar-border/80 bg-sidebar/90 shadow-[18px_0_40px_-36px_oklch(0.2_0.04_174/0.55)] backdrop-blur-xl lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
         <div className="flex h-20 items-center border-b border-sidebar-border/80 px-5">
           <Brand />
         </div>
@@ -306,7 +300,7 @@ export function AppShell() {
       {/* Content column */}
       <div className="flex min-h-screen flex-col lg:pl-64">
         {/* Mobile top bar */}
-        <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-border/70 bg-background/80 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/70 lg:hidden">
+        <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-border bg-background px-4 lg:hidden">
           <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" aria-label="Open navigation menu">
@@ -343,18 +337,18 @@ export function AppShell() {
         </header>
 
         {/* Page header */}
-        <div className="border-b border-border/70 bg-background/35 px-4 py-7 md:px-6 lg:px-8">
+        <div className="border-b border-border bg-background px-4 py-8 md:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-7xl">
-            <p className="eyebrow">Cafe Shop <span className="mx-1 text-muted-foreground/50">/</span> Operations</p>
-            <h1 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">
+            <p className="eyebrow">naokoffi☕ <span className="mx-1 text-muted-foreground/50">/</span> Operations</p>
+            <h1 className="mt-4 text-2xl font-semibold tracking-tight md:text-3xl">
               {meta.title}
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">{meta.subtitle}</p>
+            <p className="mt-2 max-w-prose text-sm text-muted-foreground">{meta.subtitle}</p>
           </div>
         </div>
 
         {/* View content */}
-        <main className="flex-1 px-4 py-7 md:px-6 lg:px-8">
+        <main className="flex-1 px-4 py-8 md:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-7xl">
             <AnimatePresence mode="wait">
               <motion.div

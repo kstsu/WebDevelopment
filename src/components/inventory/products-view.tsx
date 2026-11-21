@@ -156,7 +156,7 @@ export function ProductsView({ onQuickStock }: ProductsViewProps) {
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <div className="workspace-card flex flex-col gap-3 rounded-2xl border bg-card/75 p-3 lg:flex-row lg:items-center">
+      <div className="workspace-card flex flex-col gap-3 rounded-md border bg-card p-3 lg:flex-row lg:items-center">
         <div className="relative flex-1">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -261,7 +261,7 @@ export function ProductsView({ onQuickStock }: ProductsViewProps) {
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="min-w-56">Product</TableHead>
                     <TableHead className="hidden md:table-cell">Category</TableHead>
-                    <TableHead className="hidden xl:table-cell">Supplier</TableHead>
+                     <TableHead className="hidden xl:table-cell">Supplier</TableHead>
                     <TableHead className="text-right">Unit Price</TableHead>
                     <TableHead className="min-w-28">Stock</TableHead>
                     <TableHead>Status</TableHead>

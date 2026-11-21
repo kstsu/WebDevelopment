@@ -41,7 +41,7 @@ import { getStockStatus, useInventoryStore } from '@/lib/store'
 import type { Product, StockMovement, ViewId } from '@/lib/types'
 import type { QuickStockFn } from '@/components/inventory/app-shell'
 
-const CHART_COLORS = ['#10b981', '#14b8a6', '#f97316', '#f59e0b', '#f43f5e', '#84cc16', '#a855f7']
+const CHART_COLORS = ['#292524', '#57534e', '#78716c', '#a8a29e', '#d6d3d1']
 
 interface DashboardViewProps {
   onNavigate: (view: ViewId) => void
@@ -71,7 +71,7 @@ function ChartTooltip({
   const name = (item.payload?.name ?? String(item.name ?? '')) as string
   const color = item.payload?.fill
   return (
-    <div className="rounded-lg border bg-popover px-3 py-2 text-xs shadow-md">
+    <div className="rounded-md border bg-popover px-3 py-2 text-xs">
       <p className="flex items-center gap-1.5 font-medium text-popover-foreground">
         {color && (
           <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
@@ -98,35 +98,24 @@ function StatCard({
   value: string
   sub: string
   icon: React.ElementType
-  tone: 'emerald' | 'teal' | 'amber' | 'red'
+    tone: 'emerald' | 'teal' | 'amber' | 'red'
 }) {
   const tones = {
-    emerald: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
-    teal: 'bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300',
-    amber: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
-    red: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
+    emerald: 'text-foreground',
+    teal: 'text-foreground',
+    amber: 'text-amber-700 dark:text-amber-300',
+    red: 'text-red-700 dark:text-red-300',
   }
   return (
-    <Card className="group relative overflow-hidden transition-all hover:-translate-y-0.5">
-      <span className={`absolute inset-x-0 top-0 h-1 ${
-        tone === 'emerald'
-          ? 'bg-emerald-500'
-          : tone === 'teal'
-            ? 'bg-teal-500'
-            : tone === 'amber'
-              ? 'bg-amber-500'
-              : 'bg-red-500'
-      }`} aria-hidden="true" />
-      <CardContent className="p-5 pt-6">
+    <Card className="group">
+      <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground">{label}</p>
-            <p className="mt-1.5 truncate text-2xl font-semibold tracking-tight">{value}</p>
+            <p className="mt-2 truncate text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
             <p className="mt-1 truncate text-xs text-muted-foreground">{sub}</p>
           </div>
-           <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105 ${tones[tone]}`}>
-            <Icon className="h-5 w-5" aria-hidden="true" />
-          </span>
+           <Icon className={`mt-1 h-5 w-5 shrink-0 ${tones[tone]}`} aria-hidden="true" />
         </div>
       </CardContent>
     </Card>
@@ -196,36 +185,63 @@ export function DashboardView({ onNavigate, onQuickStock }: DashboardViewProps) 
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#123f3a] via-[#17665d] to-[#27877b] px-6 py-6 text-white shadow-[0_20px_45px_-26px_oklch(0.3_0.12_174/0.8)] md:px-8 md:py-7">
-        <div className="pointer-events-none absolute -right-12 -top-20 h-64 w-64 rounded-full border-[28px] border-white/10" aria-hidden="true" />
-        <div className="pointer-events-none absolute -bottom-28 right-24 h-56 w-56 rounded-full border-[20px] border-white/5" aria-hidden="true" />
+      <section className="relative overflow-hidden rounded-md border border-border bg-card px-6 py-6 md:px-8 md:py-7">
         <div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center">
           <div className="max-w-xl">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-100/80">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
               Operations snapshot
             </div>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">Ready for the next coffee rush.</h2>
-            <p className="mt-2 max-w-lg text-sm leading-relaxed text-emerald-50/75">
+            <p className="mt-2 max-w-lg text-sm leading-relaxed text-muted-foreground">
               Keep beans, pastries and cafe essentials stocked for every service.
             </p>
             <Button
-              variant="secondary"
+              variant="default"
               size="sm"
-              className="mt-5 bg-white/95 text-[#14534e] hover:bg-white"
+              className="mt-5"
               onClick={() => onNavigate('products')}
             >
               Browse catalog
               <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Button>
           </div>
-          <div className="flex w-full max-w-xs items-center gap-4 rounded-2xl border border-white/15 bg-black/10 p-4 backdrop-blur-sm md:w-auto md:min-w-64">
-            <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full" style={{ background: `conic-gradient(#a7f3d0 ${stockCoverage}%, rgba(255,255,255,.16) 0)` }}>
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#17665d] text-lg font-semibold">{stockCoverage}%</div>
+          <div className="flex w-full max-w-xs items-center gap-4 rounded-md border border-border bg-background p-4 md:w-auto md:min-w-64">
+            <div
+              className="relative flex h-16 w-16 shrink-0 items-center justify-center text-lg font-semibold text-foreground"
+              role="img"
+              aria-label={`${stockCoverage}% of products are above the reorder point`}
+            >
+              <svg
+                className="absolute inset-0 h-full w-full -rotate-90"
+                viewBox="0 0 40 40"
+                aria-hidden="true"
+              >
+                <circle
+                  cx="20"
+                  cy="20"
+                  r="17"
+                  fill="none"
+                  className="stroke-border"
+                  strokeWidth="3"
+                />
+                <circle
+                  cx="20"
+                  cy="20"
+                  r="17"
+                  fill="none"
+                  className="stroke-primary"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeDasharray={`${stockCoverage} ${100 - stockCoverage}`}
+                  pathLength="100"
+                />
+              </svg>
+              <span>{stockCoverage}%</span>
             </div>
             <div>
               <p className="text-sm font-medium">Stock health</p>
-              <p className="mt-1 text-xs leading-relaxed text-emerald-50/65">{healthyProducts} of {products.length} products above reorder point</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{healthyProducts} of {products.length} products above reorder point</p>
             </div>
           </div>
         </div>
@@ -390,7 +406,6 @@ export function DashboardView({ onNavigate, onQuickStock }: DashboardViewProps) 
                       key={product.id}
                       className="flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-accent/60"
                     >
-                      <span className={`h-2 w-2 shrink-0 rounded-full ${meta.dotClass}`} aria-hidden="true" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{product.name}</p>
                         <p className="text-xs text-muted-foreground">
@@ -445,7 +460,7 @@ export function DashboardView({ onNavigate, onQuickStock }: DashboardViewProps) 
                       className="flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-accent/60"
                     >
                       <span
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
                           movement.type === 'IN'
                             ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
                             : movement.type === 'OUT'

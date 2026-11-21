@@ -68,7 +68,7 @@ export function MovementsView() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by product or note…"
+             placeholder="Search by product or note…"
             className="pl-9"
             aria-label="Search movements"
           />
@@ -94,11 +94,11 @@ export function MovementsView() {
               <ArrowLeftRight className="h-10 w-10 text-muted-foreground/50" aria-hidden="true" />
               <div>
                 <p className="font-medium">
-                  {movements.length === 0 ? 'No movements yet' : 'No movements match your filters'}
+                   {movements.length === 0 ? 'No restock activity yet' : 'No activity matches your filters'}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {movements.length === 0
-                    ? 'Stock in/out activity will appear here as it happens.'
+                     ? 'Stock changes will appear here as you receive, use or adjust supplies.'
                     : 'Try a different search term or type filter.'}
                 </p>
               </div>
@@ -172,7 +172,7 @@ export function MovementsView() {
       </Card>
 
       <p className="text-xs text-muted-foreground" aria-live="polite">
-        Showing {filtered.length} of {movements.length} movements
+         Showing {filtered.length} of {movements.length} stock changes
       </p>
     </div>
   )

@@ -292,7 +292,7 @@ export function ProductDialog({ open, product, onClose }: ProductDialogProps) {
               name="costPrice"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Cost price (USD)</FormLabel>
+                   <FormLabel>Cost price (PHP)</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
@@ -312,7 +312,7 @@ export function ProductDialog({ open, product, onClose }: ProductDialogProps) {
               name="sellingPrice"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Selling price (USD)</FormLabel>
+                   <FormLabel>Selling price (PHP)</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">

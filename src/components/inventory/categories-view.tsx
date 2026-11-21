@@ -169,7 +169,7 @@ export function CategoriesView() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-card/55 px-4 py-3">
+      <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3">
         <p className="text-sm text-muted-foreground">
           {categories.length} categor{categories.length === 1 ? 'y' : 'ies'} ·{' '}
           {products.length} products organized
@@ -214,7 +214,7 @@ export function CategoriesView() {
             return (
               <Card
                 key={cat.id}
-                className="group transition-shadow hover:shadow-md"
+                className="group"
               >
                 <CardContent className="flex h-full flex-col gap-3 p-5">
                   <div className="flex items-start justify-between gap-3">
