@@ -223,13 +223,29 @@ function ResetDataButton({ full }: { full?: boolean }) {
 // ─── Boot splash (shown until client store hydrates) ────────────────────────
 
 function BootSplash() {
+  const [progress, setProgress] = useState(0)
+
+  React.useEffect(() => {
+    let frame: number
+    const start = performance.now()
+    const update = (now: number) => {
+      const next = Math.min(100, Math.round(((now - start) / 1000) * 100))
+      setProgress(next)
+      if (next < 100) frame = window.requestAnimationFrame(update)
+    }
+    frame = window.requestAnimationFrame(update)
+    return () => window.cancelAnimationFrame(frame)
+  }, [])
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background">
-      <div className="animate-pulse text-center">
-        <p className="text-2xl font-semibold tracking-[-0.05em]">naokoffi☕</p>
-        <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Inventory</p>
+    <div role="status" aria-label="Loading workspace" className="fixed inset-0 z-50 flex min-h-svh items-center justify-center bg-background text-foreground">
+      <div className="flex w-48 flex-col items-center gap-6">
+        <p className="text-[32px] font-semibold leading-none tracking-[-0.05em]">naokoffi</p>
+        <div aria-hidden="true" className="h-px w-full overflow-hidden bg-foreground/15">
+          <div className="h-full w-full origin-left bg-foreground" style={{ transform: `scaleX(${progress / 100})` }} />
+        </div>
+        <span aria-hidden="true" className="-mt-3 text-center text-[10px] tabular-nums tracking-[0.08em] text-muted-foreground">{progress}%</span>
       </div>
-      <p className="text-sm text-muted-foreground">Loading your workspace…</p>
     </div>
   )
 }
@@ -244,8 +260,13 @@ export function AppShell() {
     product: Product
     mode: 'IN' | 'OUT'
   } | null>(null)
+  const [splashComplete, setSplashComplete] = useState(false)
 
   React.useEffect(() => setMounted(true), [])
+  React.useEffect(() => {
+    const timer = window.setTimeout(() => setSplashComplete(true), 1100)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   React.useEffect(() => {
     if (!mounted) return
@@ -271,7 +292,7 @@ export function AppShell() {
     setMobileNavOpen(false)
   }
 
-  if (!mounted) return <BootSplash />
+  if (!mounted || !splashComplete) return <BootSplash />
 
   const meta = VIEW_META[view]
 
