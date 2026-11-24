@@ -7,15 +7,6 @@ const globalForMongo = globalThis as unknown as {
   mongoIndexesPromise?: Promise<void>
 }
 
-function databaseNameFromUri(uri: string): string {
-  try {
-    const name = decodeURIComponent(new URL(uri).pathname.replace(/^\//, ''))
-    return name || DATABASE_NAME_FALLBACK
-  } catch {
-    return DATABASE_NAME_FALLBACK
-  }
-}
-
 export function getMongoClient(): Promise<MongoClient> {
   const uri = process.env.DATABASE_URL
   if (!uri) throw new Error('DATABASE_URL is not set')
@@ -36,7 +27,7 @@ export function getMongoClient(): Promise<MongoClient> {
 
 export async function getDatabase(): Promise<Db> {
   const client = await getMongoClient()
-  return client.db(databaseNameFromUri(process.env.DATABASE_URL ?? ''))
+  return client.db(client.options.dbName || DATABASE_NAME_FALLBACK)
 }
 
 export async function getCollection<TSchema extends Document>(name: string): Promise<Collection<TSchema>> {

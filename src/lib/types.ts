@@ -52,7 +52,7 @@ export interface StockMovement {
 
 export type StockStatus = 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK'
 
-export type ViewId = 'dashboard' | 'products' | 'categories' | 'suppliers' | 'movements'
+export type ViewId = 'dashboard' | 'products' | 'categories' | 'suppliers' | 'movements' | 'accounts'
 
 /** Standard result for actions that can be rejected by business rules */
 export interface ActionResult {

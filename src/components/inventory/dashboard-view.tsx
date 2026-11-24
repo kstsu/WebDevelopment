@@ -45,7 +45,7 @@ const CHART_COLORS = ['#292524', '#57534e', '#78716c', '#a8a29e', '#d6d3d1']
 
 interface DashboardViewProps {
   onNavigate: (view: ViewId) => void
-  onQuickStock: QuickStockFn
+  onQuickStock?: QuickStockFn
 }
 
 // ─── Shared chart tooltip ───────────────────────────────────────────────────
@@ -416,14 +416,14 @@ export function DashboardView({ onNavigate, onQuickStock }: DashboardViewProps) 
                       <Badge className={meta.badgeClass} variant="outline">
                         {meta.label}
                       </Badge>
-                      <Button
+                      {onQuickStock && <Button
                         variant="outline"
                         size="sm"
                         className="h-8 shrink-0"
                         onClick={() => onQuickStock(product, 'IN')}
                       >
                         Restock
-                      </Button>
+                      </Button>}
                     </li>
                   )
                 })}

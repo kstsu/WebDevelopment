@@ -1,3 +1,5 @@
+import { currentAccount } from '@/server/auth'
+import { canManageInventory } from '@/lib/auth-types'
 import { NextResponse } from 'next/server'
 import { ZodError } from 'zod'
 import { MongoServerError } from 'mongodb'
@@ -45,7 +47,12 @@ export function problem(error: unknown, request: Request): NextResponse {
   }, { status: 500, headers: { 'Content-Type': 'application/problem+json', 'Cache-Control': 'no-store' } })
 }
 
-export function withProblemHandling(handler: () => Promise<Response>, request: Request): Promise<Response> {
+export async function withProblemHandling(handler: () => Promise<Response>, request: Request): Promise<Response> {
+  const user = await currentAccount()
+  if (!user) return problem(new InventoryError(401, 'unauthenticated', 'Please sign in.'), request)
+  if (!['GET', 'HEAD'].includes(request.method) && !canManageInventory(user.role)) {
+    return problem(new InventoryError(403, 'forbidden', 'Owner or admin access required.'), request)
+  }
   if (!process.env.DATABASE_URL) {
     return Promise.resolve(problem(
       new InventoryError(503, 'database_not_configured', 'MongoDB is not configured. Set DATABASE_URL on the server to enable the inventory API.'),

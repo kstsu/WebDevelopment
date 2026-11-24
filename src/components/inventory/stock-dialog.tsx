@@ -38,15 +38,6 @@ export function StockDialog({ open, product, mode, onClose }: StockDialogProps) 
   const [note, setNote] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  // Reset the form whenever the dialog opens for a (new) product
-  React.useEffect(() => {
-    if (open) {
-      setQty('1')
-      setNote('')
-      setError(null)
-    }
-  }, [open, product?.id, mode])
-
   if (!product) return null
 
   const isOut = mode === 'OUT'

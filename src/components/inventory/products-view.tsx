@@ -70,10 +70,11 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 ]
 
 interface ProductsViewProps {
-  onQuickStock: QuickStockFn
+  onQuickStock?: QuickStockFn
 }
 
 export function ProductsView({ onQuickStock }: ProductsViewProps) {
+  const canManage = !!onQuickStock
   const products = useInventoryStore((s) => s.products)
   const categories = useInventoryStore((s) => s.categories)
   const suppliers = useInventoryStore((s) => s.suppliers)
@@ -209,10 +210,10 @@ export function ProductsView({ onQuickStock }: ProductsViewProps) {
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={openCreate} className="shrink-0">
+        {canManage && <Button onClick={openCreate} className="shrink-0">
           <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
           Add Product
-        </Button>
+        </Button>}
       </div>
 
       {/* Table */}
@@ -248,7 +249,7 @@ export function ProductsView({ onQuickStock }: ProductsViewProps) {
                   Clear filters
                 </Button>
               ) : (
-                <Button size="sm" onClick={openCreate}>
+                canManage && <Button size="sm" onClick={openCreate}>
                   <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
                   Add Product
                 </Button>
@@ -319,18 +320,18 @@ export function ProductsView({ onQuickStock }: ProductsViewProps) {
                           {timeAgo(product.updatedAt)}
                         </TableCell>
                         <TableCell>
-                          <DropdownMenu>
+                          {canManage && <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Actions for ${product.name}`}>
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-44">
-                              <DropdownMenuItem onClick={() => onQuickStock(product, 'IN')}>
+                              <DropdownMenuItem onClick={() => onQuickStock?.(product, 'IN')}>
                                 <PackagePlus className="mr-2 h-4 w-4" /> Stock in
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => onQuickStock(product, 'OUT')}
+                                onClick={() => onQuickStock?.(product, 'OUT')}
                                 disabled={product.quantity <= 0}
                               >
                                 <PackageMinus className="mr-2 h-4 w-4" /> Stock out
@@ -349,7 +350,7 @@ export function ProductsView({ onQuickStock }: ProductsViewProps) {
                                 <Trash2 className="mr-2 h-4 w-4" /> Delete
                               </DropdownMenuItem>
                             </DropdownMenuContent>
-                          </DropdownMenu>
+                          </DropdownMenu>}
                         </TableCell>
                       </TableRow>
                     )
@@ -366,6 +367,7 @@ export function ProductsView({ onQuickStock }: ProductsViewProps) {
       </p>
 
       {/* Add / edit dialog */}
+      {canManage && <>
       <ProductDialog open={dialogOpen} product={editingProduct} onClose={() => setDialogOpen(false)} />
 
       {/* Delete confirmation */}
@@ -395,6 +397,7 @@ export function ProductsView({ onQuickStock }: ProductsViewProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </>}
     </div>
   )
 }

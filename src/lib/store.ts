@@ -25,6 +25,10 @@ function genId(prefix: string): string {
 const nowIso = () => new Date().toISOString()
 export const databaseApiEnabled = process.env.NEXT_PUBLIC_DATABASE_ENABLED === 'true'
 
+let writesAllowed = false
+export function setInventoryWriteAccess(allowed: boolean) { writesAllowed = allowed }
+const writeDenied = 'Owner or admin access required.'
+
 async function requestApi<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     ...init,
@@ -104,8 +108,13 @@ interface InventoryState {
 const seed = buildSeedData()
 
 export const useInventoryStore = create<InventoryState>()(
-  persist(
-    (set, get) => ({
+  persist<InventoryState>(
+    (apply, get) => {
+      const set = (change: Partial<InventoryState> | ((s: InventoryState) => Partial<InventoryState>)) => {
+        if (!writesAllowed) throw new Error(writeDenied)
+        apply(change)
+      }
+      return ({
       products: seed.products,
       categories: seed.categories,
       suppliers: seed.suppliers,
@@ -114,7 +123,7 @@ export const useInventoryStore = create<InventoryState>()(
       hydrateFromApi: async () => {
         if (!databaseApiEnabled) return
         const data = await requestApi<Pick<InventoryState, 'products' | 'categories' | 'suppliers' | 'movements'>>('/api/inventory')
-        set(data)
+        apply(data)
       },
 
       // ── Products ────────────────────────────────────────────────────────
@@ -182,6 +191,7 @@ export const useInventoryStore = create<InventoryState>()(
       },
 
       deleteProduct: (id) => {
+        if (!writesAllowed) return { ok: false, message: writeDenied }
         const product = get().products.find((p) => p.id === id)
         if (!product) return { ok: false, message: 'Product not found.' }
         set((s) => ({ products: s.products.filter((p) => p.id !== id) }))
@@ -220,6 +230,7 @@ export const useInventoryStore = create<InventoryState>()(
       },
 
       stockOut: (productId, qty, note) => {
+        if (!writesAllowed) return { ok: false, message: writeDenied }
         const product = get().products.find((p) => p.id === productId)
         if (!product) return { ok: false, message: 'Product not found.' }
         if (qty <= 0) return { ok: false, message: 'Quantity must be greater than zero.' }
@@ -305,6 +316,7 @@ export const useInventoryStore = create<InventoryState>()(
       },
 
       deleteCategory: (id) => {
+        if (!writesAllowed) return { ok: false, message: writeDenied }
         const { products, categories } = get()
         const inUse = products.filter((p) => p.categoryId === id).length
         if (inUse > 0) {
@@ -341,6 +353,7 @@ export const useInventoryStore = create<InventoryState>()(
       },
 
       deleteSupplier: (id) => {
+        if (!writesAllowed) return { ok: false, message: writeDenied }
         const { products, suppliers } = get()
         const inUse = products.filter((p) => p.supplierId === id).length
         if (inUse > 0) {
@@ -370,7 +383,8 @@ export const useInventoryStore = create<InventoryState>()(
           })
         }
       },
-    }),
+      })
+    },
     {
       // Keep the previous general-supply catalog intact under its old key.
       // The cafe workspace starts with its own inventory and saved changes.

@@ -3,17 +3,20 @@
 import * as React from 'react'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useTheme } from 'next-themes'
+import { Brand } from './brand'
+import { ThemeToggle } from './theme-toggle'
+import { canManageInventory, type AccountIdentity, type AccountSummary } from '@/lib/auth-types'
+import { AccountsView } from '@/components/inventory/accounts-view'
+
 import {
   ArrowLeftRight,
   LayoutDashboard,
   Menu,
-  Moon,
   Package,
   RotateCcw,
-  Sun,
   Tags,
   Truck,
+  Users,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -29,7 +32,8 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { databaseApiEnabled, useInventoryStore } from '@/lib/store'
+import { logoutAction } from '@/app/auth-actions'
+import { databaseApiEnabled, setInventoryWriteAccess, useInventoryStore } from '@/lib/store'
 import { toast } from 'sonner'
 import type { Product, ViewId } from '@/lib/types'
 import { StockDialog } from '@/components/inventory/stock-dialog'
@@ -45,9 +49,11 @@ const NAV_ITEMS: { id: ViewId; label: string; icon: React.ElementType }[] = [
   { id: 'categories', label: 'Categories', icon: Tags },
   { id: 'suppliers', label: 'Suppliers', icon: Truck },
   { id: 'movements', label: 'Inventory History', icon: ArrowLeftRight },
+  { id: 'accounts', label: 'Accounts', icon: Users },
 ]
 
 const VIEW_META: Record<ViewId, { title: string; subtitle: string }> = {
+  accounts: { title: 'Accounts', subtitle: 'Manage staff access to your inventory' },
   dashboard: {
     title: 'Dashboard',
     subtitle: 'Overview of inventory health and recent activity',
@@ -72,92 +78,20 @@ const VIEW_META: Record<ViewId, { title: string; subtitle: string }> = {
 
 export type QuickStockFn = (product: Product, mode: 'IN' | 'OUT') => void
 
-// ─── Brand mark ─────────────────────────────────────────────────────────────
-
-function Brand({ compact = false }: { compact?: boolean }) {
-  return (
-    <div className="flex w-full items-center justify-center text-center">
-      {!compact && (
-        <div className="leading-none">
-          <p className="text-lg font-semibold tracking-[-0.04em] text-foreground">naokoffi☕</p>
-          <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Inventory</p>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Theme toggle ───────────────────────────────────────────────────────────
-
-function ThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  const isAnimating = React.useRef(false)
-  React.useEffect(() => setMounted(true), [])
-
-  const toggleTheme = () => {
-    if (isAnimating.current) return
-
-    const root = document.documentElement
-    const nextTheme = resolvedTheme === 'dark' ? 'light' : 'dark'
-    isAnimating.current = true
-
-    const applyTheme = () => {
-      // Update the DOM inside the snapshot callback, not in a later React
-      // effect, so the new snapshot actually captures the new palette.
-      root.classList.remove('light', 'dark')
-      root.classList.add(nextTheme)
-      root.style.colorScheme = nextTheme
-      setTheme(nextTheme)
-    }
-
-    const finish = () => {
-      root.classList.remove('theme-crossfade', 'theme-color-fade')
-      isAnimating.current = false
-    }
-
-    if (typeof document.startViewTransition === 'function') {
-      root.classList.add('theme-crossfade')
-      const transition = document.startViewTransition(applyTheme)
-      void transition.finished.then(finish, finish)
-      return
-    }
-
-    // Commit the transition rules before changing colors in older browsers.
-    root.classList.add('theme-color-fade')
-    void getComputedStyle(document.body).backgroundColor
-    applyTheme()
-    window.setTimeout(finish, 700)
-  }
-
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      aria-label="Toggle color theme"
-      onClick={toggleTheme}
-    >
-      {mounted && resolvedTheme === 'dark' ? (
-        <Sun className="h-4 w-4" />
-      ) : (
-        <Moon className="h-4 w-4" />
-      )}
-    </Button>
-  )
-}
-
 // ─── Nav list (shared between sidebar and mobile sheet) ─────────────────────
 
 function NavList({
   active,
+  canManage,
   onSelect,
 }: {
   active: ViewId
+  canManage: boolean
   onSelect: (id: ViewId) => void
 }) {
   return (
     <nav aria-label="Main navigation" className="flex flex-col gap-1">
-      {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
+      {NAV_ITEMS.filter((item) => canManage || item.id !== 'accounts').map(({ id, label, icon: Icon }) => {
         const isActive = id === active
         return (
           <button
@@ -167,7 +101,7 @@ function NavList({
             aria-current={isActive ? 'page' : undefined}
             className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
               isActive
-                 ? 'bg-primary font-medium text-primary-foreground'
+                ? 'bg-primary font-medium text-primary-foreground'
                 : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
             }`}
           >
@@ -252,24 +186,27 @@ function BootSplash() {
 
 // ─── App shell ──────────────────────────────────────────────────────────────
 
-export function AppShell() {
-  const [view, setView] = useState<ViewId>('dashboard')
+export function AppShell({ user, initialView = 'dashboard', accounts = [] }: { user: AccountIdentity; initialView?: ViewId; accounts?: AccountSummary[] }) {
+  const canManage = canManageInventory(user.role)
+  React.useEffect(() => {
+    setInventoryWriteAccess(canManage)
+    return () => setInventoryWriteAccess(false)
+  }, [canManage])
+  const [selectedView, setView] = useState<ViewId>(initialView)
+  const view = !canManage && selectedView === 'accounts' ? 'dashboard' : selectedView
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
   const [stockTarget, setStockTarget] = useState<{
     product: Product
     mode: 'IN' | 'OUT'
   } | null>(null)
   const [splashComplete, setSplashComplete] = useState(false)
 
-  React.useEffect(() => setMounted(true), [])
   React.useEffect(() => {
     const timer = window.setTimeout(() => setSplashComplete(true), 1100)
     return () => window.clearTimeout(timer)
   }, [])
 
   React.useEffect(() => {
-    if (!mounted) return
     if (!databaseApiEnabled) {
       toast.info('Using browser storage', {
         description: 'MongoDB API sync is disabled. Configure the database environment variables to enable it.',
@@ -281,18 +218,19 @@ export function AppShell() {
         description: error instanceof Error ? error.message : 'Please try again shortly.',
       })
     })
-  }, [mounted])
+  }, [])
 
   const openQuickStock: QuickStockFn = React.useCallback((product, mode) => {
     setStockTarget({ product, mode })
   }, [])
 
   const selectView = (id: ViewId) => {
+    if (id === 'accounts' && !canManage) return
     setView(id)
     setMobileNavOpen(false)
   }
 
-  if (!mounted || !splashComplete) return <BootSplash />
+  if (!splashComplete) return <BootSplash />
 
   const meta = VIEW_META[view]
 
@@ -307,14 +245,15 @@ export function AppShell() {
           <p className="eyebrow">Workspace</p>
         </div>
         <div className="flex-1 overflow-y-auto px-3 py-4 custom-scrollbar">
-          <NavList active={view} onSelect={selectView} />
+          <NavList active={view} canManage={canManage} onSelect={selectView} />
         </div>
         <div className="border-t border-sidebar-border p-4">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-xs text-muted-foreground">Appearance</p>
             <ThemeToggle />
           </div>
-          <ResetDataButton full />
+          {canManage && <ResetDataButton full />}
+            <form action={logoutAction}><Button type="submit" variant="ghost" className="w-full justify-start">Logout</Button></form>
         </div>
       </aside>
 
@@ -339,14 +278,15 @@ export function AppShell() {
               </SheetHeader>
               <div className="flex h-full flex-col">
                 <div className="flex-1 overflow-y-auto px-3 py-4 custom-scrollbar">
-                  <NavList active={view} onSelect={selectView} />
+                  <NavList active={view} canManage={canManage} onSelect={selectView} />
                 </div>
                 <div className="border-t p-4">
                   <div className="mb-3 flex items-center justify-between">
                     <p className="text-xs text-muted-foreground">Appearance</p>
                     <ThemeToggle />
                   </div>
-                  <ResetDataButton full />
+                  {canManage && <ResetDataButton full />}
+            <form action={logoutAction}><Button type="submit" variant="ghost" className="w-full justify-start">Logout</Button></form>
                 </div>
               </div>
             </SheetContent>
@@ -360,7 +300,9 @@ export function AppShell() {
         {/* Page header */}
         <div className="border-b border-border bg-background px-4 py-8 md:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-7xl">
-            <p className="eyebrow">naokoffi☕ <span className="mx-1 text-muted-foreground/50">/</span> Operations</p>
+             <p className="eyebrow">
+               {view === 'accounts' ? 'naokoffi' : 'naokoffi☕'} <span className="mx-1 text-muted-foreground/50">/</span> {view === 'accounts' ? 'Administration' : 'Operations'}
+             </p>
             <h1 className="mt-4 text-2xl font-semibold tracking-tight md:text-3xl">
               {meta.title}
             </h1>
@@ -380,11 +322,12 @@ export function AppShell() {
                 transition={{ duration: 0.18, ease: 'easeOut' }}
               >
                 {view === 'dashboard' && (
-                  <DashboardView onNavigate={selectView} onQuickStock={openQuickStock} />
+                  <DashboardView onNavigate={selectView} onQuickStock={canManage ? openQuickStock : undefined} />
                 )}
-                {view === 'products' && <ProductsView onQuickStock={openQuickStock} />}
-                {view === 'categories' && <CategoriesView />}
-                {view === 'suppliers' && <SuppliersView />}
+                {view === 'products' && <ProductsView onQuickStock={canManage ? openQuickStock : undefined} />}
+                {view === 'categories' && <CategoriesView canManage={canManage} />}
+                {view === 'suppliers' && <SuppliersView canManage={canManage} />}
+                {view === 'accounts' && canManage && <AccountsView accounts={accounts} user={user} />}
                 {view === 'movements' && <MovementsView />}
               </motion.div>
             </AnimatePresence>
@@ -394,12 +337,12 @@ export function AppShell() {
       </div>
 
       {/* Quick stock dialog, shared by dashboard + products views */}
-      <StockDialog
+      {canManage && stockTarget && <StockDialog
         open={!!stockTarget}
         product={stockTarget?.product ?? null}
         mode={stockTarget?.mode ?? 'IN'}
         onClose={() => setStockTarget(null)}
-      />
+      />}
     </div>
   )
 }

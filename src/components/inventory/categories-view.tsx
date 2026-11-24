@@ -46,18 +46,10 @@ function CategoryDialog({ open, category, onClose }: CategoryDialogProps) {
   const updateCategory = useInventoryStore((s) => s.updateCategory)
   const categories = useInventoryStore((s) => s.categories)
 
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
+  const [name, setName] = useState(category?.name ?? '')
+  const [description, setDescription] = useState(category?.description ?? '')
   const [error, setError] = useState<string | null>(null)
   const isEdit = !!category
-
-  React.useEffect(() => {
-    if (open) {
-      setName(category?.name ?? '')
-      setDescription(category?.description ?? '')
-      setError(null)
-    }
-  }, [open, category])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -134,7 +126,7 @@ function CategoryDialog({ open, category, onClose }: CategoryDialogProps) {
   )
 }
 
-export function CategoriesView() {
+export function CategoriesView({ canManage }: { canManage: boolean }) {
   const categories = useInventoryStore((s) => s.categories)
   const products = useInventoryStore((s) => s.products)
   const deleteCategory = useInventoryStore((s) => s.deleteCategory)
@@ -174,7 +166,7 @@ export function CategoriesView() {
           {categories.length} categor{categories.length === 1 ? 'y' : 'ies'} ·{' '}
           {products.length} products organized
         </p>
-        <Button
+        {canManage && <Button
           onClick={() => {
             setEditing(null)
             setDialogOpen(true)
@@ -182,7 +174,7 @@ export function CategoriesView() {
         >
           <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
           Add Category
-        </Button>
+        </Button>}
       </div>
 
       {categories.length === 0 ? (
@@ -195,7 +187,7 @@ export function CategoriesView() {
                 Create your first category to start organizing products.
               </p>
             </div>
-            <Button
+            {canManage && <Button
               size="sm"
               onClick={() => {
                 setEditing(null)
@@ -204,7 +196,7 @@ export function CategoriesView() {
             >
               <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
               Add Category
-            </Button>
+            </Button>}
           </CardContent>
         </Card>
       ) : (
@@ -224,7 +216,7 @@ export function CategoriesView() {
                         {cat.description || 'No description provided.'}
                       </p>
                     </div>
-                    <div className="flex shrink-0 gap-1 opacity-70 transition-opacity group-hover:opacity-100">
+                    {canManage && <div className="flex shrink-0 gap-1 opacity-70 transition-opacity group-hover:opacity-100">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -249,7 +241,7 @@ export function CategoriesView() {
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
-                    </div>
+                    </div>}
                   </div>
                   <div className="mt-auto flex items-center justify-between">
                     <Badge variant="secondary">
@@ -266,7 +258,8 @@ export function CategoriesView() {
         </div>
       )}
 
-      <CategoryDialog open={dialogOpen} category={editing} onClose={() => setDialogOpen(false)} />
+      {canManage && <>
+      {dialogOpen && <CategoryDialog open category={editing} onClose={() => setDialogOpen(false)} />}
 
       <AlertDialog
         open={deleteOpen}
@@ -295,6 +288,7 @@ export function CategoriesView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </>}
     </div>
   )
 }

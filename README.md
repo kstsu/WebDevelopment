@@ -1,118 +1,48 @@
-# Inventory Management System (Frontend)
+# Inventory Management System
 
-A lightweight inventory management system for small & medium businesses, built with **Next.js 16 + TypeScript + Tailwind CSS 4 + shadcn/ui**.
+A Next.js 16 App Router app built with React 19, TypeScript, Tailwind CSS 4, shadcn/ui, and Zustand. The workspace includes a stock dashboard, product catalog, categories, suppliers, stock movement history, and light/dark themes.
 
-> Phase 1 scope: **Frontend only**. All data lives in the browser (localStorage via Zustand), pre-loaded with realistic seed data. Backend/database integration comes in Phase 2.
+## Run locally
 
-## Features
+Use Node.js 22 LTS and npm. From the repository root run `npm ci`, then `npm run dev`. Open `http://localhost:3000`. No database or configuration file is required. If you have an existing `.env` that enables database sync, set `NEXT_PUBLIC_DATABASE_ENABLED=false` and restart the server to use browser mode.
 
-- **Dashboard** — stock overview, low-stock alerts, inventory value summary
-- **Products** — full CRUD: add / edit / delete products, search & filter
-- **Categories** — organize products into categories (CRUD)
-- **Suppliers** — manage supplier contacts (CRUD)
-- **Stock movements** — stock in / stock out / stock adjust, with a movement history log
-- **Theme** — light / dark mode toggle
+## Roles and Test Accounts
 
-## Requirements
+The first login initializes the local development account store. An existing development store without an Owner gets the test Owner on its next auth lookup, provided that email is unused. Existing accounts and sessions are preserved. **Development test credentials only:**
 
-To run the website locally, you need:
+| Role | Email | Password | Access |
+| --- | --- | --- | --- |
+| Owner | `owner@example.com` | `owner123` | All inventory actions, stock changes, reset, and Accounts; can create Admin and Staff accounts |
+| Admin | `admin@example.com` | `admin123` | All inventory actions, stock changes, reset, and Accounts; can create Staff accounts only |
+| Staff | `staff@example.com` | `staff123` | Browse, search, filter, and view inventory history; no writes or Accounts access |
 
-- **Node.js 20 or newer** — download it from [nodejs.org](https://nodejs.org/)
-- **npm** — included with Node.js
-- A modern web browser such as Chrome, Edge, Firefox, or Safari
-- The project folder extracted from `inventory-system-frontend.zip`
-- Internet access for the first `npm install`, so npm can download the dependencies
+Sign in at `/`. A valid session opens `/inventory`. Switching tabs, including **Accounts** for Owners and Admins, stays on `/inventory` without reloading. Owners and Admins can also open `/accounts` directly. Enter a full name, email, and password (at least eight characters) to create an account. Owners can choose **Staff** or **Admin**; Admins can only assign **Staff**. The application does not offer creating another Owner or changing existing roles. Emails are case-insensitive. Sessions expire after eight hours; Logout revokes the session and returns to login. The server checks account creation, protected pages, and inventory API requests independently of the visible controls.
 
-Python is **not required** to run this app. The browser UI can fall back to localStorage, but the API routes persist data directly to MongoDB using the official MongoDB driver — no Prisma or SQLite involved.
+Accounts and sessions live in `.auth/accounts.json`, outside the public directory and ignored by Git. The browser holds only an HttpOnly session cookie. Passwords use salted scrypt hashes. `src/server/auth.ts` owns authentication, role checks, and the single-process JSON storage adapter. Replace its storage operations with database calls before deploying multiple instances; the pages do not read the file directly. Test accounts are never seeded in production. Never deploy a development `.auth` directory.
 
-Check that Node.js and npm are installed:
+In **Accounts**, open a card's actions menu to deactivate, reactivate, or permanently delete the account. Owners can manage Admin and Staff accounts; Admins can manage Staff accounts only. Nobody can deactivate or delete their own account or an Owner. Deactivation preserves the account but revokes all of its sessions and blocks sign-in. Reactivation allows a fresh sign-in without restoring old sessions. Deletion removes the account and its sessions without changing inventory records.
 
-```powershell
-node --version
-npm --version
-```
+To provision a real Owner, set `AUTH_OWNER_EMAIL` to an unused email and `AUTH_OWNER_PASSWORD` to a unique password of 12–256 characters in the server environment, then sign in with those credentials. The server only provisions this account if no Owner exists; these variables do not promote an existing account or reset an existing Owner’s password. Remove the variables after provisioning and keep the account store on persistent, private storage. For an existing development store where the test Owner email is already in use, set these variables with a different email instead.
 
-## Quick start on Windows
+### Manual verification
 
-Open PowerShell in the project folder, then run:
+- [ ] Signed out, open `/inventory` and `/accounts` directly: both return to login. Enter a wrong password and check the error.
+- [ ] Sign in as staff. Browse every view on desktop and mobile. Accounts, Add, Edit, Delete, Restock, stock changes, and Reset should not be available. Opening `/accounts` should return to inventory.
+- [ ] Sign in as admin. Create a category and supplier, create a product linked to them, change its stock, and check Inventory History. Edit and delete the test records, deleting the product first. Test Reset only on disposable sample inventory.
+- [ ] Switch through all tabs and confirm the URL stays `/inventory`. Compare Accounts with Suppliers in light and dark mode.
+- [ ] Create a staff account under Accounts. Log out and sign in with it; it should have the same restrictions as the test staff account.
+- [ ] Sign in as Owner. The role selector should offer only Staff and Admin. Create an Admin, then sign in with it and confirm its role field is fixed to Staff.
+- [ ] Using a temporary account, confirm deactivation revokes an existing session and blocks sign-in. Reactivate it and confirm a fresh login works, then delete it and confirm its card disappears. Check that Admins have no actions on Owner or Admin cards.
+- [ ] A signed-out inventory API request should return 401; an inventory write as staff should return 403 even when Atlas is not configured.
 
-```powershell
-npm install
-npm run dev
-```
+## Inventory persistence and optional Atlas sync
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+### App accounts on Atlas
 
-The development server logs appear in the terminal. Press `Ctrl+C` in PowerShell to stop it.
+Grant the server's Atlas database user `readWrite` on a separate database, such as `naokoffi_accounts_dev`, in addition to its inventory privileges. Set `AUTH_DATABASE_NAME=naokoffi_accounts_dev` in `.env.local`, set `AUTH_OWNER_EMAIL` and `AUTH_OWNER_PASSWORD` for initial provisioning, and restart. Sign in as that Owner. The app creates `Account` and `Session` collections and does not seed known test credentials in Atlas, even in development. Remove the bootstrap variables after the first successful sign-in. Keep this database's credentials private; direct write access can bypass app roles.
 
-### MongoDB setup (local, recommended for development)
+Enabling Atlas auth does not import `.auth/accounts.json` or its sessions. Keep that file as a private backup, sign in fresh, and recreate accounts in the Accounts tab. Leaving `AUTH_DATABASE_NAME` unset preserves the existing JSON adapter. Atlas connection errors do not fall back to local accounts.
 
-The API uses the official `mongodb` driver directly (no Prisma, ORM, or SQLite). Collections and indexes are created automatically on the first API request.
+The browser store (`src/lib/store.ts`) starts with demo inventory and saves changes in localStorage. It is local to that browser, not a shared or tamper-proof database. The application blocks staff mutations, but someone controlling the browser can edit their own localStorage. Use server-owned inventory for authoritative records.
 
-This project is configured for a local single-node replica set at `mongodb://127.0.0.1:27018/inventory?replicaSet=rs0&retryWrites=true&w=majority` (see `.env`). To start the database after a reboot:
-
-```powershell
-npm run db:local
-```
-
-MongoDB Server 9.0 must be installed. The data lives in `%LOCALAPPDATA%\Temp\opencode\mongodb-rs-data` and logs in `%LOCALAPPDATA%\Temp\opencode\mongod-rs.log`. The replica set only needs initiating once; the script starts the existing data directory.
-
-### MongoDB Atlas (alternative)
-
-To use a hosted database instead:
-
-1. Create a MongoDB Atlas cluster (M0 free works — it is a replica set).
-2. Set `DATABASE_URL` in `.env` to the Atlas connection string, including a database name, e.g. `mongodb+srv://user:password@cluster0.xxxxx.mongodb.net/inventory?retryWrites=true&w=majority`.
-3. Keep `NEXT_PUBLIC_DATABASE_ENABLED="true"` and restart `npm run dev`.
-
-Multi-document writes use MongoDB transactions, so a replica set is required. Without `NEXT_PUBLIC_DATABASE_ENABLED="true"`, the UI uses browser localStorage and displays a notice instead of attempting database sync. For deployments, set both environment variables in the hosting provider and rebuild the app.
-
-## Project structure
-
-```
-src/
-├── app/
-│   ├── layout.tsx          # Root layout
-│   ├── page.tsx            # Main app page
-│   └── globals.css         # Tailwind + theme styles
-├── components/
-│   ├── inventory/          # App-specific views
-│   │   ├── app-shell.tsx       # Sidebar + layout shell
-│   │   ├── dashboard-view.tsx  # Dashboard page
-│   │   ├── products-view.tsx   # Products list & CRUD
-│   │   ├── categories-view.tsx # Categories list & CRUD
-│   │   ├── suppliers-view.tsx  # Suppliers list & CRUD
-│   │   ├── movements-view.tsx  # Stock movement history
-│   │   ├── product-dialog.tsx  # Add/Edit product form
-│   │   └── stock-dialog.tsx    # Stock in/out/adjust dialog
-│   └── ui/                 # shadcn/ui component library
-├── lib/
-│   ├── store.ts            # Zustand store — all CRUD logic (client-side)
-│   ├── seed-data.ts        # Demo products/categories/suppliers
-│   ├── types.ts            # TypeScript types
-│   └── format.ts           # Currency / date formatting helpers
-```
-
-## How data persistence works (Phase 1)
-
-- On first load, demo data (products, categories, suppliers, movements) is seeded.
-- Every change you make is saved to your browser's **localStorage**.
-- To reset to demo data: clear site data for `localhost:3000` in your browser (DevTools → Application → Storage → Clear).
-
-## Tech stack
-
-| Tool | Purpose |
-| --- | --- |
-| Next.js 16 (App Router) | Framework & dev server |
-| React 19 + TypeScript | UI & type safety |
-| Tailwind CSS 4 | Styling |
-| shadcn/ui (Radix) | UI components |
-| Zustand (+ persist) | Client state & localStorage persistence |
-| MongoDB driver | Server-side database access |
-| lucide-react | Icons |
-
-## Backend
-
-- REST API routes backed directly by MongoDB (`Category`, `Supplier`, `Product`, `StockMovement`, `AuditLog`)
-- Real server-side CRUD endpoints (`/api/products`, `/api/categories`, ...)
-- Replace the client-side store with API calls
+To enable the existing MongoDB inventory API, set `DATABASE_URL` to your Atlas connection string (including the inventory database name), set `NEXT_PUBLIC_DATABASE_ENABLED=true`, and restart or rebuild the app. Keep credentials server-side. The API uses the official MongoDB driver and transactions; it does not require a local MongoDB installation. Enabling inventory sync alone does not move accounts or upload existing browser inventory.

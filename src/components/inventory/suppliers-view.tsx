@@ -62,26 +62,15 @@ function SupplierDialog({ open, supplier, onClose }: SupplierDialogProps) {
   const updateSupplier = useInventoryStore((s) => s.updateSupplier)
   const suppliers = useInventoryStore((s) => s.suppliers)
 
-  const [form, setForm] = useState<SupplierFormState>(EMPTY_FORM)
+  const [form, setForm] = useState<SupplierFormState>(() => supplier ? {
+    name: supplier.name,
+    contactPerson: supplier.contactPerson,
+    email: supplier.email,
+    phone: supplier.phone,
+    address: supplier.address,
+  } : EMPTY_FORM)
   const [error, setError] = useState<string | null>(null)
   const isEdit = !!supplier
-
-  React.useEffect(() => {
-    if (open) {
-      setForm(
-        supplier
-          ? {
-              name: supplier.name,
-              contactPerson: supplier.contactPerson,
-              email: supplier.email,
-              phone: supplier.phone,
-              address: supplier.address,
-            }
-          : EMPTY_FORM,
-      )
-      setError(null)
-    }
-  }, [open, supplier])
 
   const setField = (key: keyof SupplierFormState) => (value: string) => {
     setForm((f) => ({ ...f, [key]: value }))
@@ -209,7 +198,7 @@ function SupplierDialog({ open, supplier, onClose }: SupplierDialogProps) {
   )
 }
 
-export function SuppliersView() {
+export function SuppliersView({ canManage }: { canManage: boolean }) {
   const suppliers = useInventoryStore((s) => s.suppliers)
   const products = useInventoryStore((s) => s.products)
   const deleteSupplier = useInventoryStore((s) => s.deleteSupplier)
@@ -251,7 +240,7 @@ export function SuppliersView() {
         <p className="text-sm text-muted-foreground">
           {suppliers.length} supplier{suppliers.length === 1 ? '' : 's'} in your directory
         </p>
-        <Button
+        {canManage && <Button
           onClick={() => {
             setEditing(null)
             setDialogOpen(true)
@@ -259,7 +248,7 @@ export function SuppliersView() {
         >
           <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
           Add Supplier
-        </Button>
+        </Button>}
       </div>
 
       {suppliers.length === 0 ? (
@@ -272,7 +261,7 @@ export function SuppliersView() {
                 Add your first vendor to track where stock comes from.
               </p>
             </div>
-            <Button
+            {canManage && <Button
               size="sm"
               onClick={() => {
                 setEditing(null)
@@ -281,7 +270,7 @@ export function SuppliersView() {
             >
               <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
               Add Supplier
-            </Button>
+            </Button>}
           </CardContent>
         </Card>
       ) : (
@@ -303,7 +292,7 @@ export function SuppliersView() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex shrink-0 gap-1 opacity-70 transition-opacity group-hover:opacity-100">
+                    {canManage && <div className="flex shrink-0 gap-1 opacity-70 transition-opacity group-hover:opacity-100">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -328,7 +317,7 @@ export function SuppliersView() {
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
-                    </div>
+                    </div>}
                   </div>
 
                   <ul className="space-y-1.5 text-sm text-muted-foreground">
@@ -364,7 +353,8 @@ export function SuppliersView() {
         </div>
       )}
 
-      <SupplierDialog open={dialogOpen} supplier={editing} onClose={() => setDialogOpen(false)} />
+      {canManage && <>
+      {dialogOpen && <SupplierDialog open supplier={editing} onClose={() => setDialogOpen(false)} />}
 
       <AlertDialog
         open={deleteOpen}
@@ -393,6 +383,7 @@ export function SuppliersView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </>}
     </div>
   )
 }
